@@ -6,12 +6,9 @@ public class BillingService
   {
     "Trial" => 0,
     "Student" => basePrice * 0.5,
-    "Pro" => tenure switch
-    {
-      >= 24 => basePrice * 0.85,
-      >= 12 => basePrice * 0.10,
-      _ => basePrice,
-    },
+    "Pro" when tenure >= 24 => basePrice * 0.85,
+    "Pro" when tenure >= 12 => basePrice * 0.10,
+    "Pro" => basePrice,
     _ => basePrice,
   };
 

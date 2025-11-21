@@ -4,12 +4,12 @@ public class Subscriber
 {
   public string Id { get; private set; }
   public string Region { get; private set; }
-  public string Status { get; private set; }
+  public SubscriptionStatus Status { get; private set; }
   public int TenureMonths { get; private set; }
   public int Devices { get; private set; }
   public double BasePrice { get; private set; }
 
-  public Subscriber(string id, string region, string status, int tenureMonths, int devices, double basePrice)
+  public Subscriber(string id, string region, SubscriptionStatus status, int tenureMonths, int devices, double basePrice)
   {
     if (tenureMonths < 0)
     {
