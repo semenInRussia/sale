@@ -2,13 +2,13 @@ namespace Sale;
 
 public class BillingService
 {
-  private static double ApplyStatusDiscount(string status, int tenure, double basePrice) => status switch
+  private static double ApplyStatusDiscount(SubscriptionStatus status, int tenure, double basePrice) => status switch
   {
-    "Trial" => 0,
-    "Student" => basePrice * 0.5,
-    "Pro" when tenure >= 24 => basePrice * 0.85,
-    "Pro" when tenure >= 12 => basePrice * 0.10,
-    "Pro" => basePrice,
+    SubscriptionStatus.Trial => 0,
+    SubscriptionStatus.Student => basePrice * 0.5,
+    SubscriptionStatus.Pro when tenure >= 24 => basePrice * 0.85,
+    SubscriptionStatus.Pro when tenure >= 12 => basePrice * 0.10,
+    SubscriptionStatus.Pro => basePrice,
     _ => basePrice,
   };
 
