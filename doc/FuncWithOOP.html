@@ -1,0 +1,434 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OOPMKN2</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><h2 id="практическое-задание-№2.-функциональный-синтаксис-c-как-инструмент-упрощения-объектно-ориентированного-кода"><strong>Практическое задание №2. Функциональный синтаксис C# как инструмент упрощения объектно-ориентированного кода</strong></h2>
+<h3 id="исходная-ситуация"><strong>Исходная ситуация</strong></h3>
+<p>Вам дан пример проекта <strong>«Подписки и скидки»</strong>, реализованный в императивном стиле.<br>
+Класс <code>BillingService</code> вычисляет стоимость подписки по ряду условий: статус пользователя, стаж, регион и количество устройств.<br>
+Однако код громоздкий, содержит много <code>if/else</code>, временных переменных и ручных проверок <code>null</code>.</p>
+<p>Пример исходного кода:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">Subscriber</span>
+<span class="token punctuation">{</span>
+    <span class="token comment">// Уникальный идентификатор подписчика.</span>
+    <span class="token comment">// Используется для учёта, биллинга и однозначного отличия пользователей.</span>
+    <span class="token keyword">public</span> <span class="token keyword">string</span> Id <span class="token punctuation">{</span> <span class="token keyword">get</span><span class="token punctuation">;</span> <span class="token keyword">private</span> <span class="token keyword">set</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+
+    <span class="token comment">// Регион подписчика влияет на налоговые правила.</span>
+    <span class="token comment">// Например, в ЕС — VAT 21%, в США — налог 7%.</span>
+    <span class="token keyword">public</span> <span class="token keyword">string</span> Region <span class="token punctuation">{</span> <span class="token keyword">get</span><span class="token punctuation">;</span> <span class="token keyword">private</span> <span class="token keyword">set</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+
+    <span class="token comment">// Тарифный статус подписки: пробный, базовый, профессиональный, студенческий.</span>
+    <span class="token comment">// Влияет на расчёт скидки.</span>
+    <span class="token keyword">public</span> <span class="token keyword">string</span> Status <span class="token punctuation">{</span> <span class="token keyword">get</span><span class="token punctuation">;</span> <span class="token keyword">private</span> <span class="token keyword">set</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+
+    <span class="token comment">// Стаж подписчика в месяцах.</span>
+    <span class="token comment">// У Pro-пользователей длительность подписки влияет на прогрессивную скидку.</span>
+    <span class="token keyword">public</span> <span class="token keyword">int</span> TenureMonths <span class="token punctuation">{</span> <span class="token keyword">get</span><span class="token punctuation">;</span> <span class="token keyword">private</span> <span class="token keyword">set</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+
+    <span class="token comment">// Количество подключённых устройств.</span>
+    <span class="token comment">// Если устройств больше трёх — действует доплата.</span>
+    <span class="token keyword">public</span> <span class="token keyword">int</span> Devices <span class="token punctuation">{</span> <span class="token keyword">get</span><span class="token punctuation">;</span> <span class="token keyword">private</span> <span class="token keyword">set</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+
+    <span class="token comment">// Базовая цена тарифа без скидок и налогов.</span>
+    <span class="token keyword">public</span> <span class="token keyword">double</span> BasePrice <span class="token punctuation">{</span> <span class="token keyword">get</span><span class="token punctuation">;</span> <span class="token keyword">private</span> <span class="token keyword">set</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token function">Subscriber</span><span class="token punctuation">(</span><span class="token keyword">string</span> id<span class="token punctuation">,</span> <span class="token keyword">string</span> region<span class="token punctuation">,</span> <span class="token keyword">string</span> status<span class="token punctuation">,</span> <span class="token keyword">int</span> tenureMonths<span class="token punctuation">,</span> <span class="token keyword">int</span> devices<span class="token punctuation">,</span> <span class="token keyword">double</span> basePrice<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment">// Инициализация основных свойств объекта.</span>
+        <span class="token comment">// Здесь не выполняется валидация — это делается в TryValidate().</span>
+        Id <span class="token operator">=</span> id<span class="token punctuation">;</span>
+        Region <span class="token operator">=</span> region<span class="token punctuation">;</span>
+        Status <span class="token operator">=</span> status<span class="token punctuation">;</span>
+        TenureMonths <span class="token operator">=</span> tenureMonths<span class="token punctuation">;</span>
+        Devices <span class="token operator">=</span> devices<span class="token punctuation">;</span>
+        BasePrice <span class="token operator">=</span> basePrice<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">BillingService</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">public</span> <span class="token keyword">double</span> <span class="token function">CalcTotal</span><span class="token punctuation">(</span>Subscriber s<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment">// Базовая проверка: передан ли объект подписчика.</span>
+        <span class="token comment">// Без этого дальнейший расчёт невозможен.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>s <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ArgumentNullException</span><span class="token punctuation">(</span><span class="token function">nameof</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// Начинаем расчёт с базовой цены, которая затем будет модифицирована.</span>
+        <span class="token keyword">double</span> price <span class="token operator">=</span> s<span class="token punctuation">.</span>BasePrice<span class="token punctuation">;</span>
+
+        <span class="token comment">// Блок расчёта скидки в зависимости от статуса подписчика.</span>
+
+        <span class="token comment">// Для Trial-периода подписка бесплатна.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span>Status <span class="token operator">==</span> <span class="token string">"Trial"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            price <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        <span class="token keyword">else</span>
+        <span class="token punctuation">{</span>
+            <span class="token comment">// Студенты получают фиксированную скидку — 50%.</span>
+            <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span>Status <span class="token operator">==</span> <span class="token string">"Student"</span><span class="token punctuation">)</span>
+                price <span class="token operator">=</span> price <span class="token operator">*</span> <span class="token number">0.5</span><span class="token punctuation">;</span>
+
+            <span class="token comment">// Статус Pro имеет накопительную скидку по стажу.</span>
+            <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span>Status <span class="token operator">==</span> <span class="token string">"Pro"</span><span class="token punctuation">)</span>
+            <span class="token punctuation">{</span>
+                <span class="token comment">// Стаж ≥ 24 месяцев — максимальная скидка: 15%.</span>
+                <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span>TenureMonths <span class="token operator">&gt;=</span> <span class="token number">24</span><span class="token punctuation">)</span>
+                    price <span class="token operator">=</span> price <span class="token operator">*</span> <span class="token number">0.85</span><span class="token punctuation">;</span>
+
+                <span class="token comment">// Стаж ≥ 12 — скидка 10%.</span>
+                <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span>TenureMonths <span class="token operator">&gt;=</span> <span class="token number">12</span><span class="token punctuation">)</span>
+                    price <span class="token operator">=</span> price <span class="token operator">*</span> <span class="token number">0.9</span><span class="token punctuation">;</span>
+
+                <span class="token comment">// Меньше 12 → без скидки.</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">// Доплата за большое количество устройств.</span>
+        <span class="token comment">// Если устройств больше трёх — добавляем фиксированную сумму.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span>Devices <span class="token operator">&gt;</span> <span class="token number">3</span><span class="token punctuation">)</span>
+            price <span class="token operator">+</span><span class="token operator">=</span> <span class="token number">4.99</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// Налоговые правила по регионам.</span>
+        <span class="token comment">// Ставки представлены как надбавка к цене.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span>Region <span class="token operator">==</span> <span class="token string">"EU"</span><span class="token punctuation">)</span>
+            price <span class="token operator">+</span><span class="token operator">=</span> price <span class="token operator">*</span> <span class="token number">0.21</span><span class="token punctuation">;</span>  <span class="token comment">// НДС (VAT) в ЕС</span>
+        <span class="token keyword">else</span> <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span>Region <span class="token operator">==</span> <span class="token string">"US"</span><span class="token punctuation">)</span>
+            price <span class="token operator">+</span><span class="token operator">=</span> price <span class="token operator">*</span> <span class="token number">0.07</span><span class="token punctuation">;</span>  <span class="token comment">// Налог в США</span>
+
+        <span class="token keyword">return</span> price<span class="token punctuation">;</span> <span class="token comment">// Итоговая стоимость.</span>
+    <span class="token punctuation">}</span>
+
+    <span class="token keyword">public</span> <span class="token keyword">bool</span> <span class="token function">TryValidate</span><span class="token punctuation">(</span>Subscriber s<span class="token punctuation">,</span> <span class="token keyword">out</span> <span class="token keyword">string</span> error<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token comment">// Метод проверяет корректность объекта подписчика.</span>
+        <span class="token comment">// Используется перед расчётом стоимости.</span>
+
+        error <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+
+        <span class="token comment">// Проверка факта присутствия объекта.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>s <span class="token operator">==</span> <span class="token keyword">null</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            error <span class="token operator">=</span> <span class="token string">"No subscriber"</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">// Проверяем наличие идентификатора.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">string</span><span class="token punctuation">.</span><span class="token function">IsNullOrWhiteSpace</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>Id<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            error <span class="token operator">=</span> <span class="token string">"Id missing"</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">// Цена должна быть неотрицательной.</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>s<span class="token punctuation">.</span>BasePrice <span class="token operator">&lt;</span> <span class="token number">0</span><span class="token punctuation">)</span>
+        <span class="token punctuation">{</span>
+            error <span class="token operator">=</span> <span class="token string">"Price &lt; 0"</span><span class="token punctuation">;</span>
+            <span class="token keyword">return</span> <span class="token keyword">false</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+
+        <span class="token comment">// Если ни одно условие не нарушено — объект валиден.</span>
+        <span class="token keyword">return</span> <span class="token keyword">true</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+</code></pre>
+<hr>
+<h3 id="задача">Задача</h3>
+<p>Переписать данный код в <strong>ООП-стиле</strong> с использованием <strong>функциональных конструкций языка C#</strong>, чтобы сделать его более выразительным, компактным и безопасным, сохранив при этом объектную структуру и принципы инкапсуляции.</p>
+<hr>
+<h3 id="пошаговые-требования"><strong>Пошаговые требования</strong></h3>
+<h4 id="инкапсуляция-и-выражения-члены"><strong>1. Инкапсуляция и выражения-члены</strong></h4>
+<ul>
+<li>
+<p>В классе <code>Subscriber</code>  все поля закрытые (<code>private</code>), доступ только через свойства.</p>
+</li>
+<li>
+<p>Добавить <strong>вычисляемые свойства</strong> с использованием выражений-членов (<code>=&gt;</code>)</p>
+</li>
+<li>
+<p>Проверку аргументов в конструкторе оформить через <strong>throw-выражения</strong>.</p>
+</li>
+</ul>
+<h4 id="замена-ifelse-на-switch-выражения-и-pattern-matching"><strong>2. Замена <code>if/else</code> на <code>switch-выражения</code> и pattern matching</strong></h4>
+<p>Вынести вычисление скидки в отдельный метод с <strong>switch-выражениями</strong>:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"> <span class="token keyword">private</span> <span class="token keyword">static</span> <span class="token keyword">double</span> <span class="token function">ApplyStatusDiscount</span><span class="token punctuation">(</span><span class="token keyword">string</span> status<span class="token punctuation">,</span> <span class="token keyword">int</span> tenure<span class="token punctuation">,</span> <span class="token keyword">double</span> basePrice<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">&gt;</span>
+     status <span class="token keyword">switch</span>
+     <span class="token punctuation">{</span>
+         <span class="token string">"Trial"</span>   <span class="token operator">=</span><span class="token operator">&gt;</span> <span class="token number">0</span><span class="token punctuation">,</span>
+         <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+         <span class="token string">"Pro"</span>     <span class="token operator">=</span><span class="token operator">&gt;</span> tenure <span class="token keyword">switch</span>
+         <span class="token punctuation">{</span>
+             <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+             _     <span class="token operator">=</span><span class="token operator">&gt;</span> basePrice
+         <span class="token punctuation">}</span><span class="token punctuation">,</span>
+         _ <span class="token operator">=</span><span class="token operator">&gt;</span> basePrice
+     <span class="token punctuation">}</span><span class="token punctuation">;</span>   
+</code></pre>
+<ul>
+<li>Аналогично оформить логику доплаты за устройства и налога по региону через <strong>switch-выражения</strong>.</li>
+</ul>
+<h4 id="guard-clauses-и-операторы--.-"><strong>3. Guard-clauses и операторы <code>??</code>, <code>?.</code>, <code>??=</code></strong></h4>
+<p>Заменить ручные проверки <code>null</code> и пустых строк на компактные конструкции:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"> s <span class="token operator">=</span> s <span class="token operator">?</span><span class="token operator">?</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ArgumentNullException</span><span class="token punctuation">(</span><span class="token function">nameof</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+ Id <span class="token operator">=</span> <span class="token keyword">string</span><span class="token punctuation">.</span><span class="token function">IsNullOrWhiteSpace</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span> <span class="token operator">?</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ArgumentException</span><span class="token punctuation">(</span><span class="token string">"Id required"</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> id<span class="token punctuation">;</span>
+</code></pre>
+<h4 id="возврат-нескольких-значений-через-кортеж"><strong>4. Возврат нескольких значений через кортеж</strong></h4>
+<ul>
+<li>Переписать метод <code>TryValidate</code> без <code>out</code>:</li>
+</ul>
+<pre class=" language-csharp"><code class="prism  language-csharp">    <span class="token keyword">public</span> <span class="token punctuation">(</span><span class="token keyword">bool</span> Ok<span class="token punctuation">,</span> <span class="token keyword">string</span> Error<span class="token punctuation">)</span> <span class="token function">Validate</span><span class="token punctuation">(</span>Subscriber s<span class="token punctuation">)</span>
+    <span class="token punctuation">{</span>
+        <span class="token keyword">if</span> <span class="token punctuation">(</span>s <span class="token keyword">is</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token keyword">false</span><span class="token punctuation">,</span> <span class="token string">"No subscriber"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span>
+        <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+</code></pre>
+<ul>
+<li>
+<p>Использовать <strong>деконструкцию</strong> при вызове:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">var</span> <span class="token punctuation">(</span>ok<span class="token punctuation">,</span> error<span class="token punctuation">)</span> <span class="token operator">=</span> billing<span class="token punctuation">.</span><span class="token function">Validate</span><span class="token punctuation">(</span>sub<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+</code></pre>
+</li>
+</ul>
+<h4 id="локальные-функции"><strong>5. Локальные функции</strong></h4>
+<p>Внутри <code>CalcTotal</code> оформить мелкие шаги как <strong>локальные функции</strong>, чтобы код читался декларативно:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp">    <span class="token keyword">double</span> <span class="token function">PriceAfterStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">&gt;</span> <span class="token function">ApplyStatusDiscount</span><span class="token punctuation">(</span>s<span class="token punctuation">.</span>Status<span class="token punctuation">,</span> s<span class="token punctuation">.</span>TenureMonths<span class="token punctuation">,</span> s<span class="token punctuation">.</span>BasePrice<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">double</span> <span class="token function">WithDevices</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">&gt;</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">;</span>
+    <span class="token keyword">double</span> <span class="token function">WithTax</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">&gt;</span> <span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">.</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token function">WithTax</span><span class="token punctuation">(</span><span class="token function">WithDevices</span><span class="token punctuation">(</span><span class="token function">PriceAfterStatus</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>   
+</code></pre>
+<h4 id="инициализация-данных"><strong>6. Инициализация данных</strong></h4>
+<p>Создать несколько примеров подписчиков через <strong>объектные и коллекционные инициализаторы</strong>:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp">   <span class="token keyword">var</span> subscribers <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">List</span><span class="token operator">&lt;</span>Subscriber<span class="token operator">&gt;</span>
+   <span class="token punctuation">{</span>
+       <span class="token keyword">new</span> <span class="token class-name">Subscriber</span><span class="token punctuation">(</span><span class="token string">"A-1"</span><span class="token punctuation">,</span> <span class="token string">"EU"</span><span class="token punctuation">,</span> <span class="token string">"Trial"</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">9.99</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+       <span class="token keyword">new</span> <span class="token class-name">Subscriber</span><span class="token punctuation">(</span><span class="token string">"B-2"</span><span class="token punctuation">,</span> <span class="token string">"US"</span><span class="token punctuation">,</span> <span class="token string">"Pro"</span><span class="token punctuation">,</span> <span class="token number">18</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">,</span> <span class="token number">14.99</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+       <span class="token keyword">new</span> <span class="token class-name">Subscriber</span><span class="token punctuation">(</span><span class="token string">"C-3"</span><span class="token punctuation">,</span> <span class="token string">"EU"</span><span class="token punctuation">,</span> <span class="token string">"Student"</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">12.99</span><span class="token punctuation">)</span>
+   <span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre>
+<ul>
+<li>
+<p>Добавьте перечисление <code>enum SubscriptionStatus { Trial, Basic, Pro, Student }</code> и перепишите switch-выражения под <code>enum</code>.</p>
+</li>
+<li>
+<p>Используйте <strong>pattern matching с условием <code>when</code></strong>, например:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token string">"Pro"</span> when tenure <span class="token operator">&gt;=</span> <span class="token number">12</span> <span class="token operator">=</span><span class="token operator">&gt;</span> basePrice <span class="token operator">*</span> <span class="token number">0.9</span>
+
+</code></pre>
+</li>
+</ul>
+<hr>
+<h3 id="ожидаемый-результат"><strong>Ожидаемый результат</strong></h3>
+<p>Ваш код должен:</p>
+<ul>
+<li>
+<p>оставаться <strong>объектно-ориентированным</strong>;</p>
+</li>
+<li>
+<p>использовать современные <strong>функциональные элементы синтаксиса C#</strong>;</p>
+</li>
+<li>
+<p>быть <strong>компактнее</strong>, чем исходная версия;</p>
+</li>
+<li>
+<p>корректно обрабатывать ошибки и исключения;</p>
+</li>
+<li>
+<p>легко читаться как набор бизнес-правил, а не процедурных шагов.</p>
+</li>
+</ul>
+<h2 id="учебник"><strong>Учебник</strong></h2>
+<p>Современный C# предоставляет широкий набор средств функционального программирования, позволяющих писать <strong>более выразительный, безопасный и лаконичный код</strong>, не нарушая при этом ООП-принципы — инкапсуляцию, наследование и полиморфизм.</p>
+<p>В ходе выполнения работы студент должен научиться:</p>
+<ul>
+<li>
+<p>использовать <strong>выражения-члены (expression-bodied members)</strong>;</p>
+</li>
+<li>
+<p>применять <strong><code>switch</code>-выражения и сопоставление с образцом (pattern matching)</strong>;</p>
+</li>
+<li>
+<p>организовывать <strong>guard-clauses</strong> и операторные проверки <code>??</code>, <code>?.</code>, <code>??=</code>;</p>
+</li>
+<li>
+<p>возвращать результаты с помощью <strong>кортежей и деконструкции</strong>;</p>
+</li>
+<li>
+<p>структурировать бизнес-логику с использованием <strong>локальных функций</strong>;</p>
+</li>
+<li>
+<p>создавать объекты через <strong>объектные и коллекционные инициализаторы</strong>.</p>
+</li>
+</ul>
+<p>Все эти инструменты позволяют писать код ближе к естественному языку описания правил, а не к механическому набору инструкций.</p>
+<h4 id="выражения-члены-expression-bodied-members"><strong>1. Выражения-члены (Expression-bodied Members)</strong></h4>
+<p>Выражения-члены — это синтаксическая форма, позволяющая записывать простые свойства, методы и конструкторы в одну строку.<br>
+Пример:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">public</span> <span class="token keyword">bool</span> IsActive <span class="token operator">=</span><span class="token operator">&gt;</span> DateTime<span class="token punctuation">.</span>Now <span class="token operator">&lt;</span> ExpirationDate<span class="token punctuation">;</span>
+
+</code></pre>
+<p>Такая запись повышает читаемость, особенно при наличии множества мелких вычисляемых свойств.<br>
+Для конструкторов можно использовать <code>throw</code>-выражения, например:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">public</span> <span class="token function">User</span><span class="token punctuation">(</span><span class="token keyword">string</span> name<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">&gt;</span> Name <span class="token operator">=</span> 
+    <span class="token keyword">string</span><span class="token punctuation">.</span><span class="token function">IsNullOrWhiteSpace</span><span class="token punctuation">(</span>name<span class="token punctuation">)</span> <span class="token operator">?</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ArgumentException</span><span class="token punctuation">(</span><span class="token string">"Name required"</span><span class="token punctuation">)</span> <span class="token punctuation">:</span> name<span class="token punctuation">;</span>
+
+</code></pre>
+<h4 id="сопоставление-с-образцом-pattern-matching"><strong>2. Сопоставление с образцом (Pattern Matching)</strong></h4>
+<p>Это мощный инструмент, который позволяет проверять типы и значения переменных в одной конструкции.<br>
+Используется совместно со <code>switch</code>-выражениями:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">double</span> <span class="token function">Discount</span><span class="token punctuation">(</span><span class="token keyword">object</span> user<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">&gt;</span> user <span class="token keyword">switch</span>
+<span class="token punctuation">{</span>
+    Student s when s<span class="token punctuation">.</span>Tenure <span class="token operator">&gt;</span> <span class="token number">12</span> <span class="token operator">=</span><span class="token operator">&gt;</span> <span class="token number">0.5</span><span class="token punctuation">,</span>
+    Employee e <span class="token operator">=</span><span class="token operator">&gt;</span> <span class="token number">0.1</span><span class="token punctuation">,</span>
+    _ <span class="token operator">=</span><span class="token operator">&gt;</span> <span class="token number">0</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+</code></pre>
+<p>Можно комбинировать условия <code>when</code> для уточнения логики.</p>
+<hr>
+<h3 id="guard-clauses-и-безопасные-операторы"><strong>3. Guard-clauses и безопасные операторы</strong></h3>
+<p>Вместо громоздких проверок <code>if (x == null)</code> рекомендуется применять <em>guard-clauses</em> — короткие охранные выражения, которые немедленно завершают выполнение метода при некорректных данных.</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">public</span> <span class="token keyword">void</span> <span class="token function">Add</span><span class="token punctuation">(</span>Subscriber s<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token comment">// Как лаконично проверить s?</span>
+    <span class="token comment">//if (s is null)</span>
+        <span class="token comment">//throw new ArgumentNullException(nameof(s));</span>
+
+    <span class="token comment">//В .NET 10.0</span>
+    s <span class="token operator">?</span><span class="token operator">?</span><span class="token operator">=</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ArgumentNullException</span><span class="token punctuation">(</span><span class="token function">nameof</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">//До него</span>
+    s <span class="token operator">=</span> s <span class="token operator">?</span><span class="token operator">?</span> <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">ArgumentNullException</span><span class="token punctuation">(</span><span class="token function">nameof</span><span class="token punctuation">(</span>s<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// Дальнейший код выполняется только если s не null</span>
+<span class="token punctuation">}</span>
+
+</code></pre>
+<p>Безопасные операторы:</p>
+<ul>
+<li>
+<p><code>?.</code> — обращение к члену только если объект не null;</p>
+</li>
+<li>
+<p><code>??</code> — возвращает значение по умолчанию;</p>
+</li>
+<li>
+<p><code>??=</code> — присваивает значение, если переменная была null.</p>
+</li>
+</ul>
+<p>Они делают код надёжнее и избавляют от типичных ошибок «null reference».</p>
+<hr>
+<h3 id="возврат-нескольких-значений-через-кортеж-1"><strong>4. Возврат нескольких значений через кортеж</strong></h3>
+<p>Кортежи позволяют вернуть из метода сразу несколько значений без объявления отдельной структуры:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">public</span> <span class="token punctuation">(</span><span class="token keyword">bool</span> IsValid<span class="token punctuation">,</span> <span class="token keyword">string</span> Message<span class="token punctuation">)</span> <span class="token function">Validate</span><span class="token punctuation">(</span>User u<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>u <span class="token keyword">is</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token keyword">false</span><span class="token punctuation">,</span> <span class="token string">"No user"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token keyword">string</span><span class="token punctuation">.</span><span class="token function">IsNullOrWhiteSpace</span><span class="token punctuation">(</span>u<span class="token punctuation">.</span>Name<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token keyword">false</span><span class="token punctuation">,</span> <span class="token string">"Name missing"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token punctuation">(</span><span class="token keyword">true</span><span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+</code></pre>
+<p>Использование:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">var</span> <span class="token punctuation">(</span>ok<span class="token punctuation">,</span> msg<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token function">Validate</span><span class="token punctuation">(</span>user<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+</code></pre>
+<p>Такой подход улучшает читаемость и устраняет громоздкие конструкции с <code>out</code>.</p>
+<hr>
+<h3 id="локальные-функции-1"><strong>5. Локальные функции</strong></h3>
+<p>Локальные функции позволяют группировать вспомогательные вычисления внутри метода.<br>
+Это делает код самодокументирующимся:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">public</span> <span class="token keyword">double</span> <span class="token function">CalcTotal</span><span class="token punctuation">(</span>Order o<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">double</span> <span class="token function">BaseWithDiscount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">&gt;</span> o<span class="token punctuation">.</span>Price <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">-</span> o<span class="token punctuation">.</span>DiscountRate<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">double</span> <span class="token function">WithTax</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">&gt;</span> x <span class="token operator">*</span> <span class="token number">1.2</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token function">WithTax</span><span class="token punctuation">(</span><span class="token function">BaseWithDiscount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+</code></pre>
+<p>Локальные функции также наследуют контекст и не требуют передачи всех параметров явно.</p>
+<hr>
+<h3 id="применение-функционального-синтаксиса-в-ооп"><strong>6. Применение функционального синтаксиса в ООП</strong></h3>
+<p>Важно понимать, что функциональный стиль не заменяет ООП, а <strong>усиливает его выразительность</strong>.<br>
+Вы можете сохранить структуру классов и при этом упростить их внутреннюю реализацию.<br>
+Например, методы, выполняющие бизнес-логику, могут быть реализованы декларативно через комбинации <code>switch</code>, <code>when</code>, и выражений-членов.</p>
+<p>Современный C# позволяет совмещать оба подхода:</p>
+<ul>
+<li>
+<p>ООП отвечает за <strong>структуру и взаимодействие объектов</strong>;</p>
+</li>
+<li>
+<p>функциональный синтаксис — за <strong>чистоту и лаконичность реализации</strong>.</p>
+</li>
+</ul>
+<hr>
+<h3 id="пример">7. Пример</h3>
+<p>Допустим, есть класс <code>DiscountCalculator</code>, определяющий скидку на основе статуса клиента и суммы покупок:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">double</span> <span class="token function">CalcDiscount</span><span class="token punctuation">(</span><span class="token keyword">string</span> status<span class="token punctuation">,</span> <span class="token keyword">double</span> total<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">&gt;</span>
+    status <span class="token keyword">switch</span>
+    <span class="token punctuation">{</span>
+        <span class="token string">"VIP"</span> when total <span class="token operator">&gt;</span> <span class="token number">500</span> <span class="token operator">=</span><span class="token operator">&gt;</span> <span class="token number">0.2</span><span class="token punctuation">,</span>
+        <span class="token string">"VIP"</span> <span class="token operator">=</span><span class="token operator">&gt;</span> <span class="token number">0.15</span><span class="token punctuation">,</span>
+        <span class="token string">"Member"</span> <span class="token operator">=</span><span class="token operator">&gt;</span> <span class="token number">0.1</span><span class="token punctuation">,</span>
+        _ <span class="token operator">=</span><span class="token operator">&gt;</span> <span class="token number">0</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+</code></pre>
+<p>Далее можно применить локальные функции для сложения скидки и налога:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">public</span> <span class="token keyword">static</span> <span class="token keyword">double</span> <span class="token function">CalcFinal</span><span class="token punctuation">(</span><span class="token keyword">double</span> price<span class="token punctuation">,</span> <span class="token keyword">string</span> status<span class="token punctuation">)</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">double</span> <span class="token function">AfterDiscount</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">&gt;</span> price <span class="token operator">*</span> <span class="token punctuation">(</span><span class="token number">1</span> <span class="token operator">-</span> <span class="token function">CalcDiscount</span><span class="token punctuation">(</span>status<span class="token punctuation">,</span> price<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">double</span> <span class="token function">WithTax</span><span class="token punctuation">(</span><span class="token keyword">double</span> x<span class="token punctuation">)</span> <span class="token operator">=</span><span class="token operator">&gt;</span> x <span class="token operator">*</span> <span class="token number">1.05</span><span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token function">WithTax</span><span class="token punctuation">(</span><span class="token function">AfterDiscount</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+</code></pre>
+<p>Такая запись делает бизнес-логику компактной и легко расширяемой.</p>
+<hr>
+<h3 id="инициализация-объектов-и-коллекций"><strong>8. Инициализация объектов и коллекций</strong></h3>
+<p>Использование инициализаторов позволяет создавать объекты сразу с заполненными полями, не перегружая код:</p>
+<pre class=" language-csharp"><code class="prism  language-csharp"><span class="token keyword">var</span> users <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">List</span><span class="token operator">&lt;</span>User<span class="token operator">&gt;</span>
+<span class="token punctuation">{</span>
+    <span class="token keyword">new</span> <span class="token class-name">User</span><span class="token punctuation">(</span><span class="token string">"A"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> Age <span class="token operator">=</span> <span class="token number">25</span><span class="token punctuation">,</span> Country <span class="token operator">=</span> <span class="token string">"US"</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token keyword">new</span> <span class="token class-name">User</span><span class="token punctuation">(</span><span class="token string">"B"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> Age <span class="token operator">=</span> <span class="token number">30</span><span class="token punctuation">,</span> Country <span class="token operator">=</span> <span class="token string">"EU"</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+</code></pre>
+<hr>
+<h3 id="контрольные-вопросы-кроме-теоретического-ответа-приведите-и-практические-примеры.">Контрольные вопросы (кроме теоретического ответа приведите и практические примеры).</h3>
+<ol>
+<li>
+<p>Чем отличаются императивный и декларативный стили программирования?</p>
+</li>
+<li>
+<p>Как выражения-члены влияют на читаемость кода?</p>
+</li>
+<li>
+<p>Какие преимущества дают <code>switch</code>-выражения и pattern matching по сравнению с классическими <code>if/else</code>?</p>
+</li>
+<li>
+<p>В чём суть guard-clauses и почему они повышают надёжность кода?</p>
+</li>
+<li>
+<p>Почему использование кортежей предпочтительнее <code>out</code>-параметров?</p>
+</li>
+<li>
+<p>Как локальные функции упрощают реализацию методов?</p>
+</li>
+<li>
+<p>Можно ли использовать функциональные приёмы без нарушения принципов ООП?</p>
+</li>
+</ol>
+</div>
+</body>
+
+</html>
