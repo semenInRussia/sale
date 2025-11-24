@@ -7,7 +7,7 @@ public class BillingService
     SubscriptionStatus.Trial => 0,
     SubscriptionStatus.Student => basePrice * 0.5,
     SubscriptionStatus.Pro when tenure >= 24 => basePrice * 0.85,
-    SubscriptionStatus.Pro when tenure >= 12 => basePrice * 0.10,
+    SubscriptionStatus.Pro when tenure >= 12 => basePrice * 0.90,
     SubscriptionStatus.Pro => basePrice,
     _ => basePrice,
   };
@@ -28,7 +28,7 @@ public class BillingService
     return WithTax(WithDevices(PriceAfterStatus()));
   }
 
-  public static (bool Ok, string Error) TryValidate(Subscriber s)
+  public static (bool Ok, string Error) Validate(Subscriber s)
   {
     if (s is null) return (false, "No subscriber");
     if (string.IsNullOrWhiteSpace(s.Id)) return (false, "Id missing");
