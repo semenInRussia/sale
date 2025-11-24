@@ -7,3 +7,11 @@ var subscribers = new List<Subscriber>
        new("C-3", "EU", SubscriptionStatus.Student, 6, 2, 12.99),
    };
 
+foreach (var s in subscribers)
+{
+    var (ok, err) = BillingService.Validate(s);
+    if (!ok)
+    {
+        Console.WriteLine("error occured, when validate user with id: ", s.Id);
+    }
+}
