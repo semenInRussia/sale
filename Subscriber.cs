@@ -20,7 +20,7 @@ public class Subscriber
     var (ok, err) = BillingService.Validate(this);
     if (!ok)
     {
-      throw new ArgumentOutOfRangeException($"can't construct subscriber: {err}");
+      throw new ArgumentOutOfRangeException($"Can't construct subscriber: {err}");
     }
   }
 
