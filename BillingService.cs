@@ -30,9 +30,14 @@ public class BillingService
 
   public static (bool Ok, string Error) Validate(Subscriber s)
   {
-    if (s is null) return (false, "No subscriber");
-    if (string.IsNullOrWhiteSpace(s.Id)) return (false, "Id missing");
-    if (s.BasePrice < 0) return (false, "Price < 0");
+    var ans = (true, "");
+    ans = s is null ? (false, "No subscriber") : ans;
+    if (!ans.Item1) return ans;
+    ans = string.IsNullOrWhiteSpace(s!.Id) ? (false, "Id missing") : ans;
+    ans = string.IsNullOrWhiteSpace(s.Region) ? (false, "Region missing") : ans;
+    ans = s.Devices < 0 ? (false, "Devices < 0") : ans;
+    ans = s.BasePrice < 0 ? (false, "Price < 0") : ans;
+    ans = s.TenureMonths < 0 ? (false, "Tenure Month < 0") : ans;
     return (true, "");
   }
 }

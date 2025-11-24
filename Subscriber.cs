@@ -1,13 +1,29 @@
 namespace Sale;
 
-public class Subscriber(string _id, string _region, SubscriptionStatus _status, int _tenureMonths, int _devices, double _basePrice)
+public class Subscriber
 {
-  public string Id { get; private set; } = string.IsNullOrWhiteSpace(_id) ? throw new ArgumentException("Id required") : _id;
-  public string Region { get; private set; } = string.IsNullOrWhiteSpace(_region) ? throw new ArgumentException("Region required") : _region;
-  public SubscriptionStatus Status { get; private set; } = _status;
-  public int TenureMonths { get; private set; } = _tenureMonths < 0 ? throw new ArgumentOutOfRangeException($"expected {nameof(_tenureMonths)} >= 0, but given: {_tenureMonths}") : _tenureMonths;
-  public int Devices { get; private set; } = _devices < 0 ? throw new ArgumentOutOfRangeException($"expected {nameof(_devices)} >= 0, but given: {_devices}") : _devices;
-  public double BasePrice { get; private set; } = _basePrice < 0 ? throw new ArgumentOutOfRangeException($"expected {nameof(_basePrice)} >= 0, but given: {_basePrice}") : _basePrice;
+  public string Id { get; private set; }
+  public string Region { get; private set; }
+  public SubscriptionStatus Status { get; private set; }
+  public int TenureMonths { get; private set; }
+  public int Devices { get; private set; }
+  public double BasePrice { get; private set; }
+
+  public Subscriber(string id, string region, SubscriptionStatus status, int tenureMonths, int devices, double basePrice)
+  {
+    Id = id;
+    Region = region;
+    Status = status;
+    Devices = devices;
+    BasePrice = basePrice;
+    TenureMonths = tenureMonths;
+    var (ok, err) = BillingService.Validate(this);
+    if (!ok)
+    {
+      throw new ArgumentOutOfRangeException($"can't construct subscriber: {err}");
+    }
+  }
+
 
   public bool IsPro => Status == SubscriptionStatus.Pro;
 }
